@@ -1,85 +1,232 @@
-# Terraform Lab — Remote State in S3
+# Terraform Lab — Remote State Management with Amazon S3
 
-## Objective
-Store and manage Terraform state remotely using an Amazon S3 bucket (optionally with DynamoDB for state locking).
+## Overview
 
-## Prerequisites
-- AWS account and credentials configured (via `aws configure` or environment variables `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
-- Terraform installed (recommended >= 0.12).
-- An existing S3 bucket to hold the state (and an optional DynamoDB table for state locking).
+This project demonstrates how to configure a **Terraform Remote Backend** using **Amazon S3** to securely store infrastructure state. Instead of relying on a local `terraform.tfstate` file, the state is migrated to an S3 bucket, enabling collaboration between multiple engineers while following Infrastructure as Code (IaC) best practices.
 
-## Repository files
-- `provider.tf`: provider and backend configuration (S3 backend settings).
-- `main.tf`: Terraform resources for the lab.
-- `variables.tf`: variable declarations used by the configuration.
-- `output.tf`: outputs produced by the configuration.
-- `terraform.tfstate`: local state file (if present from previous runs).
+The lab also enables **S3 Bucket Versioning**, providing protection against accidental deletion or corruption of the Terraform state file.
 
-## Typical workflow
-1. Review and update `provider.tf` with your S3 backend configuration. Example backend block:
+---
+
+## Architecture
+
+```text
+                  Terraform CLI
+                        │
+          terraform init / plan / apply
+                        │
+                        ▼
+             Amazon S3 Remote Backend
+         ┌────────────────────────────┐
+         │      terraform.tfstate     │
+         │    S3 Versioning Enabled   │
+         └────────────────────────────┘
+```
+
+---
+
+## Objectives
+
+* Provision an Amazon S3 bucket for Terraform state storage.
+* Enable S3 Bucket Versioning.
+* Migrate Terraform state from a local backend to Amazon S3.
+* Verify the remote state using the AWS CLI.
+* Demonstrate backend migration between Local and S3.
+* Safely destroy the infrastructure by migrating the state back to a local backend.
+
+---
+
+## Technologies Used
+
+* Terraform
+* Amazon S3
+* AWS CLI
+
+---
+
+## Project Structure
+
+```text
+.
+├── main.tf
+├── provider.tf
+├── variables.tf
+├── outputs.tf
+└── README.md
+```
+
+---
+
+## Deployment Workflow
+
+### 1. Clone the Repository
+
+```bash
+git clone git@github.com:Mmiguel08/Iac-Terraform-Labs-Aws-Cloud-Security.git
+cd Iac-Terraform-Labs-Aws-Cloud-Security
+```
+
+### 2. Initialize Terraform
+
+```bash
+terraform init
+```
+
+### 3. Review the Execution Plan
+
+```bash
+terraform plan
+```
+
+### 4. Deploy the Infrastructure
+
+```bash
+terraform apply
+```
+
+---
+
+## Remote Backend Configuration
+
+Terraform uses an Amazon S3 bucket as the remote backend to store the state file.
 
 ```hcl
 terraform {
   backend "s3" {
     bucket = "your-terraform-state-bucket"
-    key    = "path/to/terraform.tfstate"
+    key    = "terraform.tfstate"
     region = "us-east-1"
-    # optional: dynamodb_table = "terraform-locks"
   }
 }
 ```
 
-2. Initialize Terraform (this configures the remote backend):
+---
 
+## S3 Bucket Configuration
+
+The bucket is configured with **Versioning**, allowing previous versions of the state file to be restored if necessary.
+
+```hcl
+resource "aws_s3_bucket" "terraform_state" {
+  bucket        = "your-terraform-state-bucket"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 ```
+
+---
+
+## Verify the Remote State
+
+Using the AWS CLI:
+
+```bash
+aws s3 ls s3://your-terraform-state-bucket
+```
+
+Expected output:
+
+```text
+terraform.tfstate
+```
+
+---
+
+## Backend Migration
+
+After configuring the S3 backend, Terraform migrates the local state file to Amazon S3:
+
+```bash
 terraform init
 ```
 
-3. Generate and review a plan:
+Terraform automatically detects the backend change and prompts for state migration.
 
+Once migrated, the local state files can be removed:
+
+```bash
+rm terraform.tfstate terraform.tfstate.backup
 ```
-terraform plan
-```
-
-4. Apply the changes:
-
-```
-terraform apply
-# or
-terraform apply -auto-approve
-```
-
-5. View outputs:
-
-```
-terraform output
-```
-
-## Verify remote state
-- In the AWS Console, browse the S3 bucket and verify the `terraform.tfstate` object exists at the configured key.
-- Or use the AWS CLI:
-
-```
-aws s3 ls s3://your-terraform-state-bucket/path/to/
-aws s3 cp s3://your-terraform-state-bucket/path/to/terraform.tfstate -
-```
-
-If you enabled a DynamoDB table for locking, confirm lock entries while running operations that modify state.
-
-## Cleanup
-To destroy resources created by this lab and remove remote state objects:
-
-```
-terraform destroy -auto-approve
-```
-
-After `terraform destroy` completes, you may delete the state object from the S3 bucket and the DynamoDB table used for locks (if any).
-
-## Notes & best practices
-- Never commit AWS credentials or other secrets into source control.
-- Use server-side encryption and bucket policies to protect state in S3.
-- Consider enabling versioning on the state bucket to protect against accidental deletions.
-- Use a dedicated S3 bucket and path per environment (dev/stage/prod) to avoid state collisions.
 
 ---
-Lab created: Terraform remote state in S3
+
+## Destroying the Infrastructure
+
+Since the Terraform state is stored inside the S3 bucket, the backend must first be migrated back to the local backend before destroying the resources.
+
+Update the backend configuration:
+
+```hcl
+terraform {
+  backend "local" {}
+}
+```
+
+Then migrate the state:
+
+```bash
+terraform init --migrate-state
+```
+
+Finally:
+
+```bash
+terraform destroy
+```
+
+---
+
+## Security Best Practices
+
+* Remote Terraform State stored in Amazon S3.
+* S3 Bucket Versioning enabled.
+* No hardcoded AWS credentials.
+* Infrastructure managed as code.
+* State recovery through object versioning.
+* Consistent state shared across multiple users.
+
+> **Production Recommendation:** Use Amazon DynamoDB for Terraform State Locking to prevent concurrent modifications to the same state file.
+
+---
+
+## Skills Demonstrated
+
+* Terraform
+* Infrastructure as Code (IaC)
+* Amazon S3
+* Terraform Remote Backend
+* Terraform State Management
+* AWS CLI
+* Cloud Infrastructure
+* Cloud Security Fundamentals
+
+---
+
+## Learning Outcomes
+
+Through this lab, I gained hands-on experience with:
+
+* Configuring Terraform Remote Backends.
+* Migrating Terraform state from Local to Amazon S3.
+* Managing infrastructure collaboratively using shared state.
+* Protecting Terraform state with S3 Versioning.
+* Managing the Terraform infrastructure lifecycle.
+* Applying cloud security and infrastructure best practices.
+
+---
+
+## Future Improvements
+
+* Implement Amazon DynamoDB for State Locking.
+* Enable Server-Side Encryption (SSE-KMS).
+* Restrict bucket access using IAM policies.
+* Organize infrastructure using reusable Terraform modules.
+* Integrate GitHub Actions for automated deployments.
+* Add security scanning with Checkov or tfsec.
