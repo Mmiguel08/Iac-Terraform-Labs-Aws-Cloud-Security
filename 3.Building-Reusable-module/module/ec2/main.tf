@@ -25,7 +25,7 @@ data "aws_ami" "amazon_linux_latest" {
       values = ["*al2023-ami-2023*x86_64*"]
     }
     filter {
-      name = "plataform-details"
+      name = "platform-details"
       values = ["Linux/UNIX"]
     }
     filter {
@@ -42,7 +42,7 @@ data "aws_ami" "ubuntu_server_latest"{
       values = ["*ubuntu-jammy-22.04-amd64-server*"]
     }
     filter{
-        name = "plataform-details"
+        name = "platform-details"
         values = ["Linux/UNIX"]
     }
     filter {

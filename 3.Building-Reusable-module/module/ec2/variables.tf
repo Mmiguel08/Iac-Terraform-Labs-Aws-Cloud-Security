@@ -12,7 +12,7 @@ variable "tagging" {
   description = "Add 'BusinessUnit' and other tags"
 
   validation {
-    condition = contains(key(va.tagging), "BusinessUnit")
+    condition = contains(keys(var.tagging), "BusinessUnit")
     error_message = "At least one tage must be called 'BusinessUnit'"
   }
 }
