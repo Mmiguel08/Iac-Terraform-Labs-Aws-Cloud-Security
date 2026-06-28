@@ -3,7 +3,11 @@ variable "aws_region" {
   type        = string
   default     = "us-east-1"
 }
-
+variable "aws_s3_backet_name" {
+  description = "name of the bucket"
+  type = string
+  default = "Cybr-backet-lab-name-90989"
+}
 variable "aws_tagging" {
   description = "Resource tags."
   type        = map(string)
@@ -11,9 +15,4 @@ variable "aws_tagging" {
     "Team"        = "security",
     "Environment" = "dev"
   }
-}
-
-variable "desired_azs" {
-  type    = list(string)
-  default = ["us-east-1f", "us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d"]
 }

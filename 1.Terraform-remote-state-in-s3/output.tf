@@ -1,7 +1,8 @@
-output "ec2_instance_details" {
-  description = "Outputs attributes of our EC2 instance"
+output "s3_bucket_details" {
+  description = "output attributes of our s3 bucket"
   value = [
-    "EC2 ARN: ${aws_instance.ec2_host.arn}",
-    "EC2 ID: ${aws_instance.ec2_host.id}"
+    "bucket ID: ${aws_s3_bucket.cybr_lab_aws_s3_bucket.id}",
+    "Bucket ARN: ${aws_s3_bucket.cybr_lab_aws_s3_bucket.arn}",
+    "Bucket Domain: ${aws_s3_bucket.cybr_lab_aws_s3_bucket.bucket_domain_name}"
   ]
 }
