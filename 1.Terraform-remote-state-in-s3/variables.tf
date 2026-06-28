@@ -1,12 +1,12 @@
 variable "aws_region" {
   description = "The aws region to deploy in."
   type        = string
-  default     = "us-east-1"
+  default     = "ap-south-1"
 }
 variable "aws_s3_backet_name" {
   description = "name of the bucket"
   type = string
-  default = "Cybr-backet-lab-name-90989"
+  default = "cybr-backet-lab-name-90989"
 }
 variable "aws_tagging" {
   description = "Resource tags."

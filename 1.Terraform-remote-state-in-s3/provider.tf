@@ -5,6 +5,14 @@ terraform {
       version = "6.52.0"
     }
   }
+  backend "local" {
+    
+  }
+  #backend "s3" {
+  #  bucket = "cybr-backet-lab-name-90989"
+  #  key = "terraform.tfstate"
+  #  region = "ap-south-1"
+  #}
 }
 
 provider "aws" {
